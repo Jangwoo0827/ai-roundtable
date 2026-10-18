@@ -57,7 +57,7 @@ function render() {
 
 function connSummary() {
   if (settings.mode === 'manual') return { text: '수동 모드 · 자동 연결 없음', tone: 'muted' };
-  if (conn.bridge === 'connecting') return { text: '브리지 연결 중…', tone: 'warn' };
+  if (conn.bridge === 'connecting') return { text: `브리지 연결 중…${conn.error ? ` ${conn.error}` : ''}`, tone: 'warn' };
   if (conn.bridge !== 'connected') return { text: `브리지 꺼짐${conn.error ? ` — ${conn.error}` : ''}`, tone: 'bad' };
   if (!conn.extension) return { text: '브리지 연결됨 · 확장 프로그램 미연결', tone: 'warn' };
   return { text: '브리지 + 확장 프로그램 연결됨', tone: 'good' };

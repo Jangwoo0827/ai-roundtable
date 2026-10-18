@@ -19,6 +19,12 @@ npm run bridge     # 자동 모드에만 필요. 콘솔에 연결 토큰이 표�
 npm test           # 엔진·스케줄러·브리지 큐 단위 테스트 (더미 데이터)
 ```
 
+## GitHub Pages로 사용
+
+https://jangwoo0827.github.io/ai-roundtable/ 에서 바로 쓸 수 있습니다(⛶ 전체 화면 지원). 수동 모드는 그대로 동작하고,
+자동 모드는 내 PC에서 `npm run bridge`를 실행해야 합니다. 처음 연결할 때 Chrome 주소창에 **로컬 네트워크 접근** 권한 요청이 뜨면 허용하세요.
+기록은 사이트 주소별로 따로 저장됩니다(localhost와 github.io의 기록은 서로 공유되지 않음).
+
 ## 확장 프로그램 설치
 
 1. Chrome에서 `chrome://extensions` → 오른쪽 위 **개발자 모드** 켜기

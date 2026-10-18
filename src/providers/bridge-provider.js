@@ -32,7 +32,11 @@ export class BridgeProvider {
     if (this.ws && this.ws.readyState <= 1) return;
     this._set({ bridge: 'connecting', error: '' });
     try {
-      const r = await fetch(`http://127.0.0.1:${this.port}/pair`, { cache: 'no-store' });
+      // 공개 사이트(GitHub Pages)에서는 Chrome이 '로컬 네트워크 접근' 허용을 물어보며 요청을 멈춰 둔다.
+      const hint = location.hostname.endsWith('github.io')
+        ? setTimeout(() => this._set({ error: '주소창 왼쪽의 권한 요청에서 "로컬 네트워크 접근"을 허용하세요.' }), 3000)
+        : null;
+      const r = await fetch(`http://127.0.0.1:${this.port}/pair`, { cache: 'no-store' }).finally(() => clearTimeout(hint));
       if (!r.ok) throw new Error(r.status === 403 ? '이 웹사이트 주소는 브리지에서 허용되지 않았습니다.' : `브리지 응답 ${r.status}`);
       this.token = (await r.json()).token;
     } catch (e) {
