@@ -58,7 +58,7 @@
   }
 
   // ProseMirror(ChatGPT·Claude), Quill(Gemini), textarea 모두에서 동작하도록 사용자 입력과 같은 경로로 넣는다.
-  async function insertText(el, text) {
+  async function insertText(el, text, { lineByLine = false } = {}) {
     el.focus();
     if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
       const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set;
@@ -72,8 +72,18 @@
     range.selectNodeContents(el);
     sel.addRange(range);
     document.execCommand('delete');
-    // insertText는 편집기의 입력 처리(beforeinput)를 그대로 거친다.
-    let ok = document.execCommand('insertText', false, text);
+    let ok;
+    if (lineByLine) {
+      // Quill(Gemini)은 여러 줄을 한 번에 넣으면 첫 줄만 남기므로 줄마다 넣고 문단을 나눈다.
+      ok = true;
+      text.split('\n').forEach((line, i) => {
+        if (i) ok = document.execCommand('insertParagraph') && ok;
+        if (line) ok = document.execCommand('insertText', false, line) && ok;
+      });
+    } else {
+      // insertText는 편집기의 입력 처리(beforeinput)를 그대로 거친다.
+      ok = document.execCommand('insertText', false, text);
+    }
     await sleep(150);
     if (!ok || !el.textContent.trim()) {
       const dt = new DataTransfer();
@@ -82,7 +92,10 @@
       await sleep(150);
     }
     const norm = (s) => s.replace(/\s+/g, '');
-    if (!norm(el.innerText || el.textContent || '').includes(norm(text).slice(0, 40))) {
+    // 앞부분만 보면 잘린 입력을 놓치므로 처음과 끝을 모두 확인한다.
+    const got = norm(el.innerText || el.textContent || '');
+    const want = norm(text);
+    if (!got.includes(want.slice(0, 40)) || !got.includes(want.slice(-40))) {
       throw new AdapterError('INPUT_FAILED', '입력창에 프롬프트를 넣지 못했습니다. 사이트 구조가 바뀌었을 수 있습니다.');
     }
   }
@@ -162,7 +175,7 @@
         if (!box) throw new AdapterError(spec.isLoggedOut?.() ? 'NOT_LOGGED_IN' : 'INPUT_NOT_FOUND', spec.isLoggedOut?.() ? '로그인이 필요합니다.' : '입력창을 찾지 못했습니다.', !spec.isLoggedOut?.());
         if (isGenerating()) throw new AdapterError('BUSY', '이전 응답이 아직 생성 중입니다.', true);
         baseline = { count: responses().length, lastText: readLatest() };
-        await insertText(box, prompt);
+        await insertText(box, prompt, { lineByLine: !!spec.lineByLine });
         const btn = await waitFor(() => {
           const b = sendButton();
           return b && !b.disabled && b.getAttribute('aria-disabled') !== 'true' ? b : null;
