@@ -12,7 +12,7 @@ import { TaskQueue } from './queue.js';
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.BRIDGE_PORT || 8787);
 const WEB_ORIGINS = new Set(
-  (process.env.ALLOWED_WEB_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173')
+  (process.env.ALLOWED_WEB_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://jangwoo0827.github.io')
     .split(',').map((s) => s.trim()).filter(Boolean),
 );
 // 비워 두면 모든 chrome-extension:// 출처를 허용(토큰은 여전히 필요). 설치 후 ID를 넣어 고정하는 것을 권장.
@@ -70,6 +70,16 @@ function broadcastStatus() {
 const server = http.createServer((req, res) => {
   const origin = req.headers.origin;
   const kind = originKind(origin);
+  // 공개 사이트(GitHub Pages) → 127.0.0.1 요청에 Chrome이 보내는 사설망 접근 사전 요청(preflight)
+  if (req.method === 'OPTIONS') {
+    if (kind !== 'web') {
+      res.writeHead(403).end();
+      return;
+    }
+    res.writeHead(204, { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET', 'access-control-allow-private-network': 'true', vary: 'Origin' });
+    res.end();
+    return;
+  }
   // 허용된 웹 출처에만 토큰을 알려 준다(다른 사이트의 브라우저 요청은 Origin을 위조할 수 없다).
   if (req.method === 'GET' && req.url === '/pair') {
     if (kind !== 'web') {

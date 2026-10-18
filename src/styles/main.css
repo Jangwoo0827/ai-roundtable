@@ -115,6 +115,10 @@ select, input[type="number"] { padding: 7px 9px; border-radius: 8px; border: 1px
 .hist li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel2); border-radius: 8px; word-break: break-word; }
 .row { display: flex; gap: 6px; }
 
+.shell.full main { max-width: none; padding-left: 28px; padding-right: 28px; }
+.shell.full .msgs { grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+.shell.full .content { max-height: 60vh; }
+
 @media (max-width: 820px) {
   .pgrid { grid-template-columns: 1fr; }
   .msgs { grid-template-columns: 1fr; }

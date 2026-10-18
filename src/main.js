@@ -66,13 +66,14 @@ function connSummary() {
 function view() {
   const d = engine.debate;
   const c = connSummary();
-  return h('div', { class: 'shell' },
+  return h('div', { class: `shell${document.fullscreenElement ? ' full' : ''}` },
     h('header', { class: 'topbar' },
       h('div', { class: 'logo' }, h('span', { class: 'logo-mark', 'aria-hidden': 'true' }, '◉'), h('span', {}, 'AI Roundtable')),
       h('span', { class: `pill ${c.tone}`, role: 'status', title: c.text }, c.text),
       h('div', { class: 'top-actions' },
         h('button', { class: 'btn ghost', onclick: () => openDialog('history') }, '기록'),
         h('button', { class: 'btn ghost', onclick: newDebate }, '＋ 새 토론'),
+        h('button', { class: 'btn ghost', onclick: toggleFullscreen, 'aria-pressed': String(!!document.fullscreenElement) }, document.fullscreenElement ? '⤡ 창 모드' : '⛶ 전체 화면'),
         h('button', { class: 'btn ghost', onclick: () => openDialog('settings'), 'aria-label': '설정' }, '⚙ 설정'),
       ),
     ),
@@ -191,6 +192,18 @@ function newDebate() {
   ui.topic = '';
   render();
 }
+
+// 전체 화면: 브라우저 UI를 숨기고 대시보드를 화면 전체 폭으로 넓힌다.
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch (e) {
+    ui.notice = `전체 화면을 열 수 없습니다: ${e.message}`;
+    render();
+  }
+}
+document.addEventListener('fullscreenchange', render);
 
 function openDialog(kind) {
   ui.dialog = kind;
