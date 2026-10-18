@@ -19,7 +19,7 @@
     isLoggedOut: () =>
       !!document.querySelector('a[href*="accounts.google.com/ServiceLogin"], a[href*="accounts.google.com/v3/signin"]') &&
       !document.querySelector('a[href*="accounts.google.com/SignOutOptions"], img.gb_P, [aria-label*="Google Account" i], [aria-label*="Google 계정"]'),
-    lineByLine: true,
+    paragraphs: true,
     stableMs: 3000,
   });
 })();

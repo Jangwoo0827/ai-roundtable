@@ -58,7 +58,7 @@
   }
 
   // ProseMirror(ChatGPT·Claude), Quill(Gemini), textarea 모두에서 동작하도록 사용자 입력과 같은 경로로 넣는다.
-  async function insertText(el, text, { lineByLine = false } = {}) {
+  async function insertText(el, text, { paragraphs = false } = {}) {
     el.focus();
     if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
       const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set;
@@ -73,13 +73,18 @@
     sel.addRange(range);
     document.execCommand('delete');
     let ok;
-    if (lineByLine) {
-      // Quill(Gemini)은 여러 줄을 한 번에 넣으면 첫 줄만 남기므로 줄마다 넣고 문단을 나눈다.
+    if (paragraphs) {
+      // Quill(Gemini)은 execCommand로 여러 줄을 넣으면 첫 줄만 남는다(대화 2턴째부터는 줄 단위 입력도 실패).
+      // 줄마다 <p>를 직접 만들고 input 이벤트로 알리면 Quill이 DOM 변화를 그대로 받아들인다.
+      el.replaceChildren(...text.split('\n').map((line) => {
+        const p = document.createElement('p');
+        if (line) p.textContent = line;
+        else p.append(document.createElement('br'));
+        return p;
+      }));
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
       ok = true;
-      text.split('\n').forEach((line, i) => {
-        if (i) ok = document.execCommand('insertParagraph') && ok;
-        if (line) ok = document.execCommand('insertText', false, line) && ok;
-      });
+      await sleep(300);
     } else {
       // insertText는 편집기의 입력 처리(beforeinput)를 그대로 거친다.
       ok = document.execCommand('insertText', false, text);
@@ -175,7 +180,7 @@
         if (!box) throw new AdapterError(spec.isLoggedOut?.() ? 'NOT_LOGGED_IN' : 'INPUT_NOT_FOUND', spec.isLoggedOut?.() ? '로그인이 필요합니다.' : '입력창을 찾지 못했습니다.', !spec.isLoggedOut?.());
         if (isGenerating()) throw new AdapterError('BUSY', '이전 응답이 아직 생성 중입니다.', true);
         baseline = { count: responses().length, lastText: readLatest() };
-        await insertText(box, prompt, { lineByLine: !!spec.lineByLine });
+        await insertText(box, prompt, { paragraphs: !!spec.paragraphs });
         const btn = await waitFor(() => {
           const b = sendButton();
           return b && !b.disabled && b.getAttribute('aria-disabled') !== 'true' ? b : null;
