@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "AI Roundtable Connector",
+  "version": "0.1.0",
+  "description": "로그인된 Gemini·ChatGPT·Claude 웹 채팅을 로컬 AI Roundtable 토론에 연결합니다. API 키를 쓰지 않습니다.",
+  "minimum_chrome_version": "116",
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "AI Roundtable" },
+  "permissions": ["storage", "tabs", "scripting", "alarms"],
+  "host_permissions": [
+    "https://gemini.google.com/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["content/common.js", "adapters/gemini.js", "content/runner.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content/common.js", "adapters/chatgpt.js", "content/runner.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content/common.js", "adapters/claude.js", "content/runner.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

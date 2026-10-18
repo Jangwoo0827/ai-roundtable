@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8" /><title>Mock ChatGPT DOM</title></head>
+<body>
+  <!-- ChatGPT 구조를 흉내 낸 로컬 모의 페이지. 어댑터의 입력·전송·완료 감지 로직만 검증한다(실제 사이트 검증 아님). -->
+  <main id="thread"></main>
+  <form onsubmit="return false">
+    <div id="prompt-textarea" contenteditable="true" role="textbox" style="min-height:40px;border:1px solid #888"></div>
+    <button id="send" data-testid="send-button" aria-label="Send prompt" disabled>Send</button>
+  </form>
+  <script>
+    const box = document.getElementById('prompt-textarea');
+    const send = document.getElementById('send');
+    box.addEventListener('input', () => (send.disabled = !box.textContent.trim()));
+    send.addEventListener('click', () => {
+      const q = box.textContent;
+      box.textContent = '';
+      send.disabled = true;
+      const u = document.createElement('div');
+      u.dataset.messageAuthorRole = 'user';
+      u.textContent = q;
+      thread.append(u);
+      const stop = document.createElement('button');
+      stop.dataset.testid = 'stop-button';
+      stop.textContent = 'Stop';
+      send.after(stop);
+      const a = document.createElement('div');
+      a.dataset.messageAuthorRole = 'assistant';
+      a.innerHTML = '<div class="markdown"></div>';
+      thread.append(a);
+      const words = `모의 응답입니다. 질문 길이 ${q.length}자. 스트리밍으로 조금씩 출력됩니다.`.split(' ');
+      let i = 0;
+      const timer = setInterval(() => {
+        a.firstChild.textContent += (i ? ' ' : '') + words[i++];
+        if (i >= words.length) {
+          clearInterval(timer);
+          stop.remove();
+        }
+      }, 300);
+    });
+  </script>
+  <script src="/extension/content/common.js"></script>
+  <script src="/extension/adapters/chatgpt.js"></script>
+</body>
+</html>
